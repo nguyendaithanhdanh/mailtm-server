@@ -2,7 +2,7 @@ const express = require("express");
 const axios = require("axios");
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000; // Dùng PORT của Railway
 
 // Hàm delay (chờ)
 const delay = ms => new Promise(res => setTimeout(res, ms));
@@ -38,8 +38,6 @@ async function getMailTmCode(email, password, timeout = 30000) {
         const text = msgRes.data.text || "";
 
         // Regex tìm mã dạng 6 ký tự chữ + số liền nhau
-    
-
         const match = text.match(/\b[A-Z0-9]{6}\b/);
         if (match) {
           code = match[0];
@@ -59,22 +57,18 @@ async function getMailTmCode(email, password, timeout = 30000) {
 }
 
 // -------------------
-// Route API
-app.get("/getcode", async (req, res) => {
-  const { account, pass } = req.query;
-  if (!account || !pass) {
-    return res.status(400).json({ error: "Thiếu account hoặc pass" });
+// Route API GET /get-code
+app.get("/get-code", async (req, res) => {
+  const { email, password } = req.query;
+  if (!email || !password) {
+    return res.status(400).json({ error: "Thiếu email hoặc password" });
   }
 
-  const code = await getMailTmCode(account, pass, 30000); // timeout 30s
-  if (code) {
-    res.json({ code });
-  } else {
-    res.json({ code: null, message: "Không tìm thấy code trong 30s" });
-  }
+  const code = await getMailTmCode(email, password, 30000); // timeout 30s
+  res.json({ code: code || null });
 });
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`Server chạy tại http://localhost:${PORT}`);
+  console.log(`Server chạy tại port ${PORT}`);
 });
